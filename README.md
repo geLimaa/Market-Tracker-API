@@ -1,113 +1,111 @@
 # MarketTracker
 
-MarketTracker is a market dashboard for monitoring cryptocurrency prices and foreign exchange rates.
+MarketTracker is a market tracking dashboard for cryptocurrencies and foreign exchange rates.
 
-The project provides a FastAPI backend that collects market data from external APIs, stores historical data in PostgreSQL, and exposes REST endpoints for the frontend.
+The application collects market data from external APIs, stores historical information in PostgreSQL, provides a REST API through FastAPI, and displays the data through a React dashboard.
 
 ## Features
 
-* Cryptocurrency prices
+* Cryptocurrency price tracking
 
   * Bitcoin (BTC)
   * Ethereum (ETH)
   * Solana (SOL)
-* 24-hour cryptocurrency price change
+* Cryptocurrency 24-hour price changes
 * Foreign exchange rates
 
   * USD/BRL
   * EUR/BRL
 * Historical market data
-* In-memory cache
 * Automatic data collection every 15 minutes
-* Automatic deletion of records older than 30 days
+* In-memory API caching
+* Automatic deletion of data older than 30 days
+* Responsive React dashboard
 * REST API
-* PostgreSQL database
+* PostgreSQL persistence
 * Database migrations with Alembic
-* Automated tests with Pytest
+* Automated tests with pytest
 
 ## Technologies
 
+### Frontend
+
+* React
+* TypeScript
+* Vite
+
+### Backend
+
 * Python
 * FastAPI
+* HTTPX
 * SQLAlchemy
 * Pydantic
-* PostgreSQL
 * Alembic
-* HTTPX
+* PostgreSQL
+
+### APIs
+
+* CoinGecko
+* Frankfurter
+
+### Testing
+
 * Pytest
-* Docker
+* Pytest-asyncio
 
 ## Architecture
 
 ```text
-Frontend
-    |
-    v
-FastAPI
-    |
-    +---- CoinGecko API
-    |
-    +---- Frankfurter API
-    |
-    +---- PostgreSQL
+                    ┌─────────────────┐
+                    │   React + Vite  │
+                    │    Frontend     │
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │     FastAPI     │
+                    │     Backend     │
+                    └───────┬─┬───────┘
+                            │ │
+              ┌─────────────┘ └─────────────┐
+              ▼                             ▼
+      ┌───────────────┐             ┌───────────────┐
+      │  PostgreSQL   │             │ External APIs │
+      │   Database    │             │ CoinGecko /   │
+      │               │             │ Frankfurter   │
+      └───────────────┘             └───────────────┘
 ```
 
-The backend is responsible for fetching external market data, storing historical records, and providing the data through REST endpoints.
-
-## External APIs
-
-### CoinGecko
-
-Used to retrieve cryptocurrency prices and 24-hour price changes.
-
-### Frankfurter
-
-Used to retrieve foreign exchange rates.
+The backend periodically collects market data and stores it in PostgreSQL. The frontend consumes the REST API to display current and historical data.
 
 ## Project Structure
 
 ```text
-backend/
-├── app/
-│   ├── database/
-│   │   ├── base.py
-│   │   └── connection.py
-│   │
-│   ├── models/
-│   │   ├── crypto.py
-│   │   └── currency.py
-│   │
-│   ├── routes/
-│   │   ├── crypto_routes.py
-│   │   └── currency_routes.py
-│   │
-│   ├── schemas/
-│   │   ├── crypto.py
-│   │   └── currency.py
-│   │
-│   ├── services/
-│   │   ├── cache.py
-│   │   ├── collector.py
-│   │   ├── coingecko.py
-│   │   ├── crypto_history.py
-│   │   ├── frankfurter.py
-│   │   └── currency_history.py
-│   │
-│   └── main.py
+MarketTracker/
+├── backend/
+│   ├── app/
+│   │   ├── database/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── schemas/
+│   │   └── services/
+│   ├── alembic/
+│   ├── tests.py
+│   ├── alembic.ini
+│   ├── docker-compose.yml
+│   └── requirements.txt
 │
-├── alembic/
-├── tests.py
-├── alembic.ini
-└── docker-compose.yml
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.ts
+│
+└── .gitignore
 ```
 
-## Requirements
-
-* Python 3.12+
-* Docker
-* Docker Compose
-
-## Installation
+## Backend Setup
 
 Clone the repository:
 
@@ -120,44 +118,24 @@ Create a virtual environment:
 
 ```bash
 python -m venv .venv
-```
-
-Activate it on Linux:
-
-```bash
 source .venv/bin/activate
 ```
 
-Install the dependencies:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Environment Variables
-
-Create a `.env` file in the `backend` directory.
-
-Example:
+Create a `.env` file:
 
 ```env
 DATABASE_URL=postgresql://markettracker:markettracker@localhost:5433/markettracker
 ```
 
-The `.env` file should not be committed to the repository.
-
-Add it to `.gitignore:
-
-```gitignore
-.env
-.venv/
-__pycache__/
-.pytest_cache/
-```
-
 ## Database
 
-Start PostgreSQL with Docker Compose:
+Start PostgreSQL with Docker:
 
 ```bash
 docker compose up -d
@@ -169,34 +147,33 @@ Run the database migrations:
 alembic upgrade head
 ```
 
-## Running the API
+## Running the Backend
 
 Start the FastAPI server:
 
 ```bash
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload
 ```
 
 The API will be available at:
 
 ```text
-http://localhost:8001
+http://localhost:8000
 ```
 
-Interactive API documentation:
+FastAPI documentation:
 
 ```text
-http://localhost:8001/docs
+http://localhost:8000/docs
 ```
 
 ## API Endpoints
 
 ### Cryptocurrency
 
-Get the current price of a cryptocurrency:
-
 ```text
 GET /crypto/{coin_id}
+GET /crypto/{coin_id}/history
 ```
 
 Example:
@@ -205,24 +182,11 @@ Example:
 GET /crypto/bitcoin
 ```
 
-Get cryptocurrency history:
-
-```text
-GET /crypto/{coin_id}/history
-```
-
-Example:
-
-```text
-GET /crypto/bitcoin/history
-```
-
 ### Exchange Rates
-
-Get the current exchange rate:
 
 ```text
 GET /currency/{base}/{target}
+GET /currency/{base}/{target}/history
 ```
 
 Example:
@@ -231,128 +195,88 @@ Example:
 GET /currency/USD/BRL
 ```
 
-Get exchange rate history:
-
-```text
-GET /currency/{base}/{target}/history
-```
-
-Example:
-
-```text
-GET /currency/USD/BRL/history
-```
-
 ## Automatic Data Collection
 
 The backend includes a background collector that runs every 15 minutes.
 
 It collects:
 
-* BTC, ETH and SOL prices
-* USD/BRL exchange rate
-* EUR/BRL exchange rate
+* Bitcoin
+* Ethereum
+* Solana
+* USD/BRL
+* EUR/BRL
 
-The collected data is stored in PostgreSQL and can be accessed through the history endpoints.
+Collected data is stored in PostgreSQL and can later be retrieved through the historical endpoints.
 
 Records older than 30 days are automatically removed.
 
 ## Cache
 
-The API uses an in-memory cache to reduce unnecessary requests to external APIs.
+The API uses an in-memory cache to avoid unnecessary requests to external APIs.
 
-Cached values expire after 60 seconds.
+Cached data has a limited lifetime and is automatically refreshed after expiration.
 
-The cache is stored in application memory, so it is cleared whenever the backend is restarted.
+## Frontend Setup
 
-## Running Tests
-
-Run the tests with:
+Navigate to the frontend:
 
 ```bash
-pytest tests.py -v
+cd frontend
 ```
 
-The tests cover the cache and the external API clients using mocked HTTP responses.
-
-## Database Management
-
-The project uses Alembic for database migrations.
-
-Create a new migration after changing the models:
+Install dependencies:
 
 ```bash
-alembic revision --autogenerate -m "description"
+npm install
 ```
 
-Apply migrations:
+Create a `.env` file:
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+Start the development server:
 
 ```bash
-alembic upgrade head
+npm run dev
+```
+
+The frontend will be available at the URL provided by Vite.
+
+## Testing
+
+From the backend directory:
+
+```bash
+pytest
+```
+
+The tests cover components such as:
+
+* Cache behavior
+* CoinGecko API client
+* Frankfurter API client
+
+## Deployment
+
+The application is designed to be deployed as separate frontend and backend services.
+
+Environment variables should be configured through the hosting provider rather than committed to the repository.
+
+The production frontend should use the deployed backend URL:
+
+```env
+VITE_API_URL=https://your-backend-url
+```
+
+The production backend should use the PostgreSQL connection string provided by the hosting provider:
+
+```env
+DATABASE_URL=your-production-database-url
 ```
 
 ## License
 
-This project was developed for educational and portfolio purposes.
-
-````
-
-### `.env`
-
-No seu caso, **por enquanto é só isso**:
-
-```env
-DATABASE_URL=postgresql://markettracker:markettracker@localhost:5433/markettracker
-````
-
-Mas tem um detalhe importante: **seu código atual ainda tem a `DATABASE_URL` escrita diretamente no `connection.py`**. Se você vai colocar no GitHub, eu recomendo fazer essa pequena mudança antes.
-
-Em vez de:
-
-```python
-DATABASE_URL = "postgresql://markettracker:markettracker@localhost:5433/markettracker"
-```
-
-usar:
-
-```python
-import os
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-```
-
-E aí o `.env` precisa ser carregado. Se você já usa `python-dotenv`, pode fazer:
-
-```python
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-```
-
-E instalar:
-
-```bash
-pip install python-dotenv
-```
-
-**Isso é importante antes de publicar no GitHub**, porque aí sua senha do PostgreSQL não fica exposta no código.
-
-E coloca no `.gitignore`:
-
-```gitignore
-.env
-.venv/
-__pycache__/
-.pytest_cache/
-```
-
-Se o repositório já tiver sido inicializado com Git, vale também conferir com:
-
-```bash
-git status
-```
-
-para garantir que o `.env` **não aparece** como arquivo para commit.
+This project is for educational and portfolio purposes.
