@@ -69,25 +69,28 @@ async def get_crypto_price(coin_id: str, session: Session=Depends(get_session)):
       return cached_data
 
     try:
-      data = await client.get_price(coin_id)
-      coin_data = data[coin_id]
+      data = await client.get_prices(SUPPORTED_COINS)
 
-      result = CryptoPrice(
-        symbol=coin_id.upper(),
-        price=coin_data["usd"],
-        change_24h=coin_data["usd_24h_change"],
-        currency="USD"
-      )
+      for coin in SUPPORTED_COINS:
+        coind_data = data[coin_id]
 
-      save_crypto_price(
-        session=session,
-        symbol=coin_id.upper(),
-        price=coin_data["usd"],
-        change_24h=coin_data["usd_24h_change"],
-        currency="USD"
-      )
+        result = CryptoPrice(
+          symbol=coin_id.upper(),
+          price=coin_data["usd"],
+          change_24h=coin_data["usd_24h_change"],
+          currency="USD"
+        )
 
-      cache.set(key, result)
+        save_crypto_price(
+          session=session,
+          symbol=coin_id.upper(),
+          price=coin_data["usd"],
+          change_24h=coin_data["usd_24h_change"],
+          currency="USD"
+        )
+
+        cache.set(f"crypto:{coin}", result)
+
       return result
 
     except CoinGeckoTimeoutError:

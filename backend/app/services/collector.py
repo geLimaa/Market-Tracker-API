@@ -37,8 +37,9 @@ async def collect_crypto():
         change_24h=coin_data["usd_24h_change"],
         currency="USD"
       )
-
-    print(f"{coin.upper()}: ${coin_data['usd']}")  
+      
+      print(f"{coin.upper()}: ${coin_data['usd']}")  
+  
   finally:
     session.close()
 
