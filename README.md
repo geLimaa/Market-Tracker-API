@@ -1,25 +1,26 @@
-# MarketTracker
+# Market Tracker
 
-MarketTracker is a market tracking dashboard for cryptocurrencies and foreign exchange rates.
+Market Tracker is a market tracking dashboard for cryptocurrencies and foreign exchange rates.
 
-The application collects market data from external APIs, stores historical information in PostgreSQL, provides a REST API through FastAPI, and displays the data through a React dashboard.
+The application collects market data from external APIs, stores historical information in PostgreSQL, exposes a REST API through FastAPI, and displays the data through a React dashboard.
+
+**Live demo:** https://market-tracker-api.netlify.app/
+**Repository:** https://github.com/geLimaa/Market-Tracker-API
+
+> This project is deployed and does not need to be run locally to be used. The sections below describe the live architecture; local setup instructions are included at the end for anyone who wants to run their own instance.
 
 ## Features
 
 * Cryptocurrency price tracking
-
   * Bitcoin (BTC)
   * Ethereum (ETH)
   * Solana (SOL)
 * Cryptocurrency 24-hour price changes
 * Foreign exchange rates
-
   * USD/BRL
   * EUR/BRL
 * Historical market data
-* Automatic data collection every 15 minutes
-* In-memory API caching
-* Automatic deletion of data older than 30 days
+* In-memory API caching to reduce external API calls
 * Responsive React dashboard
 * REST API
 * PostgreSQL persistence
@@ -33,6 +34,7 @@ The application collects market data from external APIs, stores historical infor
 * React
 * TypeScript
 * Vite
+* Deployed on Netlify
 
 ### Backend
 
@@ -42,12 +44,16 @@ The application collects market data from external APIs, stores historical infor
 * SQLAlchemy
 * Pydantic
 * Alembic
-* PostgreSQL
+* Deployed on Render
 
-### APIs
+### Database
 
-* CoinGecko
-* Frankfurter
+* PostgreSQL, hosted on Neon
+
+### External APIs
+
+* CoinGecko (cryptocurrency prices)
+* Frankfurter (exchange rates)
 
 ### Testing
 
@@ -59,21 +65,21 @@ The application collects market data from external APIs, stores historical infor
 ```text
                     ┌─────────────────┐
                     │   React + Vite  │
-                    │    Frontend     │
+                    │   (Netlify)     │
                     └────────┬────────┘
                              │
                              ▼
                     ┌─────────────────┐
                     │     FastAPI     │
-                    │     Backend     │
+                    │    (Render)     │
                     └───────┬─┬───────┘
                             │ │
               ┌─────────────┘ └─────────────┐
               ▼                             ▼
       ┌───────────────┐             ┌───────────────┐
       │  PostgreSQL   │             │ External APIs │
-      │   Database    │             │ CoinGecko /   │
-      │               │             │ Frankfurter   │
+      │    (Neon)     │             │ CoinGecko /   │
+      │               │             │  Frankfurter  │
       └───────────────┘             └───────────────┘
 ```
 
@@ -82,7 +88,7 @@ The backend periodically collects market data and stores it in PostgreSQL. The f
 ## Project Structure
 
 ```text
-MarketTracker/
+Market-Tracker-API/
 ├── backend/
 │   ├── app/
 │   │   ├── database/
@@ -105,25 +111,70 @@ MarketTracker/
 └── .gitignore
 ```
 
-## Backend Setup
+## API Reference
 
-Clone the repository:
+Base URL: `https://market-tracker-api.onrender.com`
 
-```bash
-git clone <repository-url>
-cd MarketTracker/backend
+### Cryptocurrency
+
+```text
+GET /api/v1/crypto/
+GET /api/v1/crypto/{coin_id}
+GET /api/v1/crypto/{coin_id}/history
 ```
 
-Create a virtual environment:
+Example:
+
+```text
+GET /api/v1/crypto/bitcoin
+```
+
+### Exchange Rates
+
+```text
+GET /api/v1/currency/{base}/{target}
+GET /api/v1/currency/{base}/{target}/history
+```
+
+Example:
+
+```text
+GET /api/v1/currency/USD/BRL
+```
+
+Interactive API documentation (Swagger UI) is available at `/docs` on the backend URL.
+
+## Caching and Rate Limiting
+
+The API uses an in-memory cache to avoid unnecessary requests to external APIs. Cached data has a limited lifetime and is refreshed automatically after expiration.
+
+Requests to CoinGecko are authenticated with a Demo API key, which gives the backend a dedicated request quota instead of relying on shared-IP rate limits from the hosting provider.
+
+## Testing
+
+From the backend directory:
 
 ```bash
+pytest
+```
+
+Tests cover components such as:
+
+* Cache behavior
+* CoinGecko API client
+* Frankfurter API client
+
+## Running Locally
+
+The project is designed to run as deployed, but it can also be run locally for development.
+
+### Backend
+
+```bash
+git clone https://github.com/geLimaa/Market-Tracker-API
+cd Market-Tracker-API/backend
 python -m venv .venv
 source .venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
 pip install -r requirements.txt
 ```
 
@@ -131,103 +182,28 @@ Create a `.env` file:
 
 ```env
 DATABASE_URL=postgresql://markettracker:markettracker@localhost:5433/markettracker
+COINGECKO_API_KEY=your-coingecko-demo-api-key
 ```
 
-## Database
-
-Start PostgreSQL with Docker:
+Start PostgreSQL with Docker and run migrations:
 
 ```bash
 docker compose up -d
-```
-
-Run the database migrations:
-
-```bash
 alembic upgrade head
 ```
 
-## Running the Backend
-
-Start the FastAPI server:
+Start the server:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The API will be available at:
+The API will be available at `http://localhost:8000`, with docs at `http://localhost:8000/docs`.
 
-```text
-http://localhost:8000
-```
-
-FastAPI documentation:
-
-```text
-http://localhost:8000/docs
-```
-
-## API Endpoints
-
-### Cryptocurrency
-
-```text
-GET /crypto/{coin_id}
-GET /crypto/{coin_id}/history
-```
-
-Example:
-
-```text
-GET /crypto/bitcoin
-```
-
-### Exchange Rates
-
-```text
-GET /currency/{base}/{target}
-GET /currency/{base}/{target}/history
-```
-
-Example:
-
-```text
-GET /currency/USD/BRL
-```
-
-## Automatic Data Collection
-
-The backend includes a background collector that runs every 15 minutes.
-
-It collects:
-
-* Bitcoin
-* Ethereum
-* Solana
-* USD/BRL
-* EUR/BRL
-
-Collected data is stored in PostgreSQL and can later be retrieved through the historical endpoints.
-
-Records older than 30 days are automatically removed.
-
-## Cache
-
-The API uses an in-memory cache to avoid unnecessary requests to external APIs.
-
-Cached data has a limited lifetime and is automatically refreshed after expiration.
-
-## Frontend Setup
-
-Navigate to the frontend:
+### Frontend
 
 ```bash
 cd frontend
-```
-
-Install dependencies:
-
-```bash
 npm install
 ```
 
@@ -242,41 +218,3 @@ Start the development server:
 ```bash
 npm run dev
 ```
-
-The frontend will be available at the URL provided by Vite.
-
-## Testing
-
-From the backend directory:
-
-```bash
-pytest
-```
-
-The tests cover components such as:
-
-* Cache behavior
-* CoinGecko API client
-* Frankfurter API client
-
-## Deployment
-
-The application is designed to be deployed as separate frontend and backend services.
-
-Environment variables should be configured through the hosting provider rather than committed to the repository.
-
-The production frontend should use the deployed backend URL:
-
-```env
-VITE_API_URL=https://your-backend-url
-```
-
-The production backend should use the PostgreSQL connection string provided by the hosting provider:
-
-```env
-DATABASE_URL=your-production-database-url
-```
-
-## License
-
-This project is for educational and portfolio purposes.
