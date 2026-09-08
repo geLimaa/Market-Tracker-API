@@ -6,7 +6,7 @@ import { Header } from './components/Header';
 import { PriceChart } from './components/PriceChart';
 import {
   getCryptoHistory,
-  getCryptoPrice,
+  getCryptoPrices,
   getExchangeHistory,
   getExchangeRate,
 } from './services/api';
@@ -36,15 +36,17 @@ function App() {
     try {
       setError(false);
 
-      const [bitcoin, ethereum, solana, usd, eur] = await Promise.all([
-        getCryptoPrice('bitcoin'),
-        getCryptoPrice('ethereum'),
-        getCryptoPrice('solana'),
+      const [cryptos, usd, eur] = await Promise.all([
+        getCryptoPrices(),
         getExchangeRate('USD', 'BRL'),
         getExchangeRate('EUR', 'BRL'),
       ]);
 
-      setCrypto({ bitcoin, ethereum, solana });
+      setCrypto({
+        bitcoin: cryptos.find(coin => coin.symbol === 'BITCOIN')!,
+        ethereum: cryptos.find(coin => coin.symbol === 'ETHEREUM')!,
+        solana: cryptos.find(coin => coin.symbol === 'SOLANA')!,
+      });      
       setRates({ USD: usd, EUR: eur });
     } catch {
       setError(true);
