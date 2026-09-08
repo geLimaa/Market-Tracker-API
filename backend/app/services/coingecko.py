@@ -1,5 +1,10 @@
 import httpx
+import os 
+from dotenv import load_dotenv
 from app.exceptions import CoinGeckoTimeoutError, CoinGeckoRateLimitError, CoinGeckoAPIError
+
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
 
 class CoinGeckoClient:
 
@@ -13,12 +18,13 @@ class CoinGeckoClient:
       "vs_currencies": "usd",
       "include_24hr_change": "true"
     }
+    headers = {"x-cg-demo-api-key": API_KEY}
 
     try:
       async with httpx.AsyncClient(timeout=10.0) as client:
         print(f"COINGECKO REQUEST: {coin_id}")
 
-        response = await client.get(url, params=params)
+        response = await client.get(url, params=params, headers=headers)
 
         print(f"COINGECKO RESPONSE: {coin_id} -> {response.status_code}")
 
@@ -44,10 +50,11 @@ class CoinGeckoClient:
         "vs_currencies": "usd",
         "include_24hr_change": "true"
     }
+    headers = {"x-cg-demo-api-key": API_KEY}
 
     try:
       async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.get(url, params=params)
+        response = await client.get(url, params=params, headers=headers)
 
         response.raise_for_status()
 
