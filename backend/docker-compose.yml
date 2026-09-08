@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: markettracker-postgres
+    environment:
+      POSTGRES_USER: markettracker
+      POSTGRES_PASSWORD: markettracker
+      POSTGRES_DB: markettracker
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
