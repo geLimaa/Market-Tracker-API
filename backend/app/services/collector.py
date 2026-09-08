@@ -24,10 +24,10 @@ async def collect_crypto():
   session = SessionLocal()
 
   try:
-
+    
+    data = await coingecko.get_prices(SUPPORTED_COINS)
     for coin in SUPPORTED_COINS:
       
-      data = await coingecko.get_price(coin)
       coin_data = data[coin]
 
       save_crypto_price(
@@ -38,7 +38,7 @@ async def collect_crypto():
         currency="USD"
       )
 
-      print("f{coin.upper()}: "f"${coin_data['usd']}")
+    print(f"{coin.upper()}: ${coin_data['usd']}")  
   finally:
     session.close()
 

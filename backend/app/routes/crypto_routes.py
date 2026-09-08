@@ -18,14 +18,10 @@ client = CoinGeckoClient()
 @crypto_router.get("/", response_model=list[CryptoPrice])
 async def get_crypto_prices():
   try:
-    results = await asyncio.gather(  # simultaneous requests
-      client.get_price("bitcoin"),
-      client.get_price("ethereum"),
-      client.get_price("solana"),
-    )
+    data = await client.get_prices(SUPPORTED_COINS)
 
     prices = []
-    for coin_id, data in zip(SUPPORTED_COINS, results):
+    for coin_id in SUPPORTED_COINS:
       coin_data = data[coin_id]
 
       prices.append(

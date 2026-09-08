@@ -35,3 +35,32 @@ class CoinGeckoClient:
 
     except httpx.HTTPError as error:
       raise CoinGeckoAPIError() from error
+
+  async def get_prices(self, coin_ids: list[str]):
+    url = f"{self.BASE_URL}/simple/price"
+
+    params = {
+        "ids": ",".join(coin_ids),
+        "vs_currencies": "usd",
+        "include_24hr_change": "true"
+    }
+
+    try:
+      async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.get(url, params=params)
+
+        response.raise_for_status()
+
+        return response.json()
+
+    except httpx.TimeoutException:
+      raise CoinGeckoTimeoutError()
+
+    except httpx.HTTPStatusError as error:
+      if error.response.status_code == 429:
+        raise CoinGeckoRateLimitError()
+
+      raise CoinGeckoAPIError() from error
+
+    except httpx.HTTPError as error:
+      raise CoinGeckoAPIError() from error
