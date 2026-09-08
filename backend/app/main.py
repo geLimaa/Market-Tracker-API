@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.services.collector import collect_market_data
 from app.routes.crypto_routes import crypto_router
@@ -14,6 +15,16 @@ async def lifespan(app: FastAPI):
   task.cancel()
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://market-tracker-api.netlify.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(crypto_router)
 app.include_router(currency_router)

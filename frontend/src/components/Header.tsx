@@ -10,7 +10,9 @@ export function Header() {
           <div className="brand-tagline">Market data at a glance</div>
         </div>
       </div>
-      <div className="live-status"><span className="live-dot" /> Live market data</div>
+      <div className="live-status">
+        <span className="live-dot" /> Live market data
+      </div>
     </header>
   );
 }
