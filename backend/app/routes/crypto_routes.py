@@ -17,6 +17,13 @@ client = CoinGeckoClient()
 
 @crypto_router.get("/", response_model=list[CryptoPrice])
 async def get_crypto_prices():
+
+  key = "crypto:all"
+  cached_data = cache.get(key)
+
+  if cached_data is not None:
+    return cached_data
+
   try:
     data = await client.get_prices(SUPPORTED_COINS)
 
@@ -32,7 +39,8 @@ async def get_crypto_prices():
           currency="USD"
         )
       )
-    
+
+    cache.set(key, prices)
     return prices
 
   except CoinGeckoTimeoutError:
@@ -70,26 +78,24 @@ async def get_crypto_price(coin_id: str, session: Session=Depends(get_session)):
 
     try:
       data = await client.get_prices(SUPPORTED_COINS)
+      coin_data = data[coin_id]
 
-      for coin in SUPPORTED_COINS:
-        coind_data = data[coin_id]
+      result = CryptoPrice(
+        symbol=coin_id.upper(),
+        price=coin_data["usd"],
+        change_24h=coin_data["usd_24h_change"],
+        currency="USD"
+      )
 
-        result = CryptoPrice(
-          symbol=coin_id.upper(),
-          price=coin_data["usd"],
-          change_24h=coin_data["usd_24h_change"],
-          currency="USD"
-        )
+      save_crypto_price(
+        session=session,
+        symbol=coin_id.upper(),
+        price=coin_data["usd"],
+        change_24h=coin_data["usd_24h_change"],
+        currency="USD"
+      )
 
-        save_crypto_price(
-          session=session,
-          symbol=coin_id.upper(),
-          price=coin_data["usd"],
-          change_24h=coin_data["usd_24h_change"],
-          currency="USD"
-        )
-
-        cache.set(f"crypto:{coin}", result)
+      cache.set(key, result)
 
       return result
 
