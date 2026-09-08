@@ -21,10 +21,10 @@ export function CurrencyCard({ base, target, data, loading }: Props) {
       ) : (
         <div className="currency-value">
           {data
-            ? data.rate.toLocaleString('en-US', {
+            ? `${data.rate.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 4,
-              })
+              })}R$`
             : '—'}
         </div>
       )}
