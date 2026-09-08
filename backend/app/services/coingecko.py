@@ -16,8 +16,12 @@ class CoinGeckoClient:
 
     try:
       async with httpx.AsyncClient(timeout=10.0) as client:
+        print(f"COINGECKO REQUEST: {coin_id}")
+
         response = await client.get(url, params=params)
-      
+
+        print(f"COINGECKO RESPONSE: {coin_id} -> {response.status_code}")
+
       response.raise_for_status() # error threat
       return response.json()
 
@@ -27,7 +31,7 @@ class CoinGeckoClient:
     except httpx.HTTPStatusError as error:
       if error.response.status_code == 429:
         raise CoinGeckoRateLimitError()
-      raise CoinGeckoAPIError
+      raise CoinGeckoAPIError()
 
     except httpx.HTTPError as error:
-      raise CoinGeckoAPIError from error
+      raise CoinGeckoAPIError() from error
